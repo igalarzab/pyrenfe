@@ -1,0 +1,88 @@
+#! /usr/bin/env python
+#
+#  Check the trains schedule (Renfe, Spain)
+#  ===================================================
+#
+#    Checks the timetable and generates a notification
+#    if a train is near to leave the station.
+#
+#    Jose Ignacio Galarza
+#    <igalarzab@gmail.com>
+#
+
+from datetime import datetime, timedelta, time
+import re
+import requests
+import sys
+
+# Data of the request
+URL = 'http://horarios.renfe.com/cer/hjcer310.jsp'
+O = '98003'
+D = '18000'
+DF = '20121022'
+
+
+def download_timetable():
+    'Download the timetable from renfe.com'
+
+    form = {
+        'nucleo': '10', 'i': 's', 'I': 's', 'cp': 'NO', 'CP': 'NO',
+        'TXTInfo': '', 'o': O, 'd': D, 'df': DF, 'ho': '00', 'hd': '26'
+    }
+
+    r = requests.post(URL, data=form)
+
+    schedule = re.compile('<td class=color1 align=center>(.*)</td>')
+    matches = [map(int, e.split('.')) for e in schedule.findall(r.text)]
+
+    return [time(x[0], x[1]) for x in matches]
+
+
+def check_limits(timetable, mini=10, maxi=15):
+    'Return trains between mini and maxi minutes from now'
+    now = datetime.now()
+
+    low = now + timedelta(0, mini * 60)
+    high = now + timedelta(0, maxi * 60)
+
+    # We only care about time
+    low, high = low.time(), high.time()
+
+    return filter(lambda x: x > low and x <= high, timetable)
+
+
+def raise_notification(trains):
+    'Raise the notification to the system'
+    pass  # TODO: Show a notification via dbus, growl...
+
+
+def show_help():
+    'Show how to use the script'
+    print('Use: ./renfe.py [high] [low]')
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    try:
+        if len(sys.argv) == 3:
+            mini, maxi = map(int, sys.argv[1:])
+        elif len(sys.argv) == 2:
+            if sys.argv[1] in ('-h', '--help'):
+                show_help()
+            mini, maxi = 10, int(sys.argv[1])
+        elif len(sys.argv) == 1:
+            mini, maxi = 10, 15
+        else:
+            show_help()
+    except ValueError:
+        show_help()
+
+    trains = check_limits(download_timetable(), mini, maxi)
+
+    if trains:
+        print('Next trains at:', ', '.join(map(str, trains)))
+        raise_notification(trains)
+    else:
+        print('No trains')
+
+# vim: ai ts=4 sts=4 et sw=4
