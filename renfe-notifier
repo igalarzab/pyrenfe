@@ -11,15 +11,25 @@
 #
 
 from datetime import datetime, timedelta, time
+import os
 import re
 import requests
+import subprocess
 import sys
+
+try:
+    import pynotify
+except ImportError:
+    pynotify = None
+
 
 # Data of the request
 URL = 'http://horarios.renfe.com/cer/hjcer310.jsp'
 O = '98003'
 D = '18000'
 DF = '20121022'
+ho = '00'
+hd = '26'
 
 
 def download_timetable():
@@ -27,7 +37,7 @@ def download_timetable():
 
     form = {
         'nucleo': '10', 'i': 's', 'I': 's', 'cp': 'NO', 'CP': 'NO',
-        'TXTInfo': '', 'o': O, 'd': D, 'df': DF, 'ho': '00', 'hd': '26'
+        'TXTInfo': '', 'o': O, 'd': D, 'df': DF, 'ho': ho, 'hd': hd
     }
 
     r = requests.post(URL, data=form)
@@ -51,9 +61,19 @@ def check_limits(timetable, mini=10, maxi=15):
     return filter(lambda x: x > low and x <= high, timetable)
 
 
-def raise_notification(trains):
+def raise_notification(title, msg):
     'Raise the notification to the system'
-    pass  # TODO: Show a notification via dbus, growl...
+    noti = pynotify.Notification(title, msg, 'dialog-warning')
+    noti.show()
+
+    # Execute mplayer with a sound (FIXME: Find a better way)
+    try:
+        parent_dir = os.path.dirname(os.path.realpath(__file__))
+        with open('/dev/null', 'wb') as devnull:
+            subprocess.Popen(['mplayer', os.path.join(parent_dir,
+                'train.mp3')], stdout=devnull, stderr=devnull)
+    except:
+        pass
 
 
 def show_help():
@@ -80,9 +100,17 @@ if __name__ == '__main__':
     trains = check_limits(download_timetable(), mini, maxi)
 
     if trains:
-        print('Next trains at:', ', '.join(map(str, trains)))
-        raise_notification(trains)
+        msg = 'Next train%s leaving at ' + ', '.join(map(str, trains))
+        msg = msg % 's are' if len(trains) > 1 else msg % ' is'
+
+        if sys.stdout.isatty():
+            print(msg)
+
+        if pynotify:
+            pynotify.init('renfe-notifier')
+            raise_notification('Train leaving...', msg)
     else:
-        print('No trains')
+        if sys.stdout.isatty():
+            print('No trains')
 
 # vim: ai ts=4 sts=4 et sw=4
