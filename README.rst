@@ -17,6 +17,13 @@ What I need.
 To use ``renfe-notifier``, you only need:
 
 * Python
+* Requests (python module)
+* Mplayer (optional, to execute a sound with the notification)
+
+To install the requirements (in a Debian GNU/Linux or derivate system) execute::
+
+    $ sudo apt-get install mplayer python-pip
+    $ sudo pip install requests
 
 
 How to install it.
@@ -28,7 +35,7 @@ There is no installation, just execute it :)
 How to use
 ===========
 
-To run, you only need to execute the provided script::
+To run it, you only need to execute the provided script::
 
   $ chmod +x renfe-notifier
   $ ./renfe-notifier
@@ -48,4 +55,3 @@ Author
 * `Jose Ignacio Galarza (igalarzab)`_
 
   .. _`Jose Ignacio Galarza (igalarzab)`: http://github.com/igalarzab
-  .. _`HomeBrew`: http://mxcl.github.com/homebrew/
