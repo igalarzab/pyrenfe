@@ -105,10 +105,10 @@ if __name__ == '__main__':
 
         if sys.stdout.isatty():
             print(msg)
-
-        if pynotify:
-            pynotify.init('renfe-notifier')
-            raise_notification('Train leaving...', msg)
+        else:
+            if pynotify:
+                pynotify.init('renfe-notifier')
+                raise_notification('Train leaving...', msg)
     else:
         if sys.stdout.isatty():
             print('No trains')
