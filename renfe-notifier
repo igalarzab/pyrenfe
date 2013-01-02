@@ -16,6 +16,7 @@ import re
 import requests
 import subprocess
 import sys
+import logging
 
 try:
     import pynotify
@@ -27,8 +28,8 @@ except ImportError:
 URL = 'http://horarios.renfe.com/cer/hjcer310.jsp'
 O = '98003'
 D = '18000'
-DF = '20121022'
-ho = '00'
+DF = datetime.now().strftime('%Y%m%d')
+ho = '17'
 hd = '26'
 
 
@@ -36,8 +37,8 @@ def download_timetable():
     'Download the timetable from renfe.com'
 
     form = {
-        'nucleo': '10', 'i': 's', 'I': 's', 'cp': 'NO', 'CP': 'NO',
-        'TXTInfo': '', 'o': O, 'd': D, 'df': DF, 'ho': ho, 'hd': hd
+        'nucleo': '10', 'i': 's', 'cp': 'NO', 'TXTInfo': '',
+        'o': O, 'd': D, 'df': DF, 'ho': ho, 'hd': hd
     }
 
     r = requests.post(URL, data=form)
@@ -48,12 +49,12 @@ def download_timetable():
     return [time(x[0], x[1]) for x in matches]
 
 
-def check_limits(timetable, mini=10, maxi=15):
+def check_limits(timetable, minval=10, maxval=15):
     'Return trains between mini and maxi minutes from now'
     now = datetime.now()
 
-    low = now + timedelta(0, mini * 60)
-    high = now + timedelta(0, maxi * 60)
+    low = now + timedelta(0, minval * 60)
+    high = now + timedelta(0, maxval * 60)
 
     # We only care about time
     low, high = low.time(), high.time()
@@ -61,19 +62,20 @@ def check_limits(timetable, mini=10, maxi=15):
     return filter(lambda x: x > low and x <= high, timetable)
 
 
-def raise_notification(title, msg):
+def raise_notification(title, message):
     'Raise the notification to the system'
-    noti = pynotify.Notification(title, msg, 'dialog-warning')
+    noti = pynotify.Notification(title, message, 'dialog-warning')
     noti.show()
 
     # Execute mplayer with a sound (FIXME: Find a better way)
     try:
         parent_dir = os.path.dirname(os.path.realpath(__file__))
         with open('/dev/null', 'wb') as devnull:
-            subprocess.Popen(['mplayer', os.path.join(parent_dir,
-                'train.mp3')], stdout=devnull, stderr=devnull)
-    except:
-        pass
+            subprocess.Popen(['mplayer',
+                              os.path.join(parent_dir, 'train.mp3')],
+                             stdout=devnull, stderr=devnull)
+    except Exception:
+        logging.warning('No mplayer installed')
 
 
 def show_help():
