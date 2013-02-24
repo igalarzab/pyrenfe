@@ -75,7 +75,7 @@ class RenfeRoute(object):
             duration = map(int, t[3].text.split(':'))
 
             trains_timetable.append({
-                'train': t[0].text,
+                'train': t[0].text.strip(),
                 'leave': time(*map(int, t[1].text.split(':'))),
                 'arrive': time(*map(int, t[2].text.split(':'))),
                 'time': timedelta(*duration),
@@ -84,8 +84,34 @@ class RenfeRoute(object):
         return trains_timetable
 
 
+class TimetablePrinter(object):
+    'Pretty print timetables'
+
+    @staticmethod
+    def as_table(timetable):
+        'Print the timetable as a table'
+        print('-' * 41)
+        print('|   Leaves   |   Arrives  |     Line    |')
+        print('-' * 41)
+
+        for tt in timetable:
+            print('|%(leave)10s  |%(arrive)10s  |%(train)08s     |' % tt)
+            print('-' * 41)
+
+    @staticmethod
+    def as_text(timetable):
+        'Print the timetable as human text'
+        for tt in timetable:
+            print('Next train leaves at %(leave)s and '
+                  'arrives at %(arrive)s (line %(train)s)' % tt)
+
+    @staticmethod
+    def as_notification(timetable):
+        pass  # TODO: Use pynotify
+
+
 if __name__ == '__main__':
     rr = RenfeRoute(98003, 18000)
-    print rr.nextTrain()
+    TimetablePrinter.as_table(rr.nextTrain())
 
 # vim: ai ts=4 sts=4 et sw=4
