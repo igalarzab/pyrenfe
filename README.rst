@@ -1,6 +1,6 @@
-===============
-renfe-notifier
-===============
+=======
+pyrenfe
+=======
 
 What it does.
 ==============
@@ -14,16 +14,17 @@ Nothing more, nothing less... :D
 What I need.
 =============
 
-To use ``renfe-notifier``, you only need:
+To use ``pyrenfe``, you only need:
 
-* Python
-* Requests (python module)
-* Mplayer (optional, to execute a sound with the notification)
+* python >= 2.6
+* requests (python module)
+* lxml (python module)
+* mplayer (optional, to execute a sound with the notification)
 
 To install the requirements (in a Debian GNU/Linux or derivate system) execute::
 
     $ sudo apt-get install mplayer python-pip
-    $ sudo pip install requests
+    $ sudo pip install requests lxml
 
 
 How to install it.
@@ -37,8 +38,8 @@ How to use
 
 To run it, you only need to execute the provided script::
 
-  $ chmod +x renfe-notifier
-  $ ./renfe-notifier
+  $ chmod +x renfe
+  $ ./renfe
 
 Previously you need to configure the route you want to be notified on. To do this,
 open it and edit the global variables at the top of the file.
