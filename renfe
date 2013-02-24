@@ -10,6 +10,7 @@
 #    <igalarzab@gmail.com>
 #
 
+import argparse
 from datetime import datetime, timedelta, time
 import re
 
@@ -109,7 +110,16 @@ class TimetablePrinter(object):
         pass  # TODO: Use pynotify
 
 
+def create_parser():
+    'Parse the program arguments'
+    pparser = argparse.ArgumentParser(description='Check Renfe schedule')
+    return pparser
+
+
 if __name__ == '__main__':
+    parser = create_parser()
+    args = parser.parse_args()
+
     rr = RenfeRoute(98003, 18000)
     TimetablePrinter.as_table(rr.nextTrain())
 

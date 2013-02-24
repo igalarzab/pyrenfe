@@ -16,7 +16,7 @@ What I need.
 
 To use ``pyrenfe``, you only need:
 
-* python >= 2.6
+* python >= 2.7
 * requests (python module)
 * lxml (python module)
 * mplayer (optional, to execute a sound with the notification)
