@@ -3,8 +3,8 @@
 #  Check the trains schedule (Renfe, Spain)
 #  ===================================================
 #
-#    Checks the timetable and generates a notification
-#    if a train is near to leave the station.
+#    Provides a class to check the timetable of the
+#    trains in Spain.
 #
 #    Jose Ignacio Galarza
 #    <igalarzab@gmail.com>
@@ -13,106 +13,79 @@
 from datetime import datetime, timedelta, time
 import os
 import re
-import requests
-import subprocess
 import sys
-import logging
 
-try:
-    import pynotify
-except ImportError:
-    pynotify = None
+from lxml import etree
+import requests
 
 
-# Data of the request
-URL = 'http://horarios.renfe.com/cer/hjcer310.jsp'
-O = '98003'
-D = '18000'
-DF = datetime.now().strftime('%Y%m%d')
-ho = '17'
-hd = '26'
+class RenfeRoute(object):
+    'A renfe route between two stations'
 
+    # API URL (XML)
+    URL = 'http://horarios.renfe.com/cer/horarios/horarios.jsp'
 
-def download_timetable():
-    'Download the timetable from renfe.com'
+    def __init__(self, rfrom, rto):
+        'Initialize the route between an origin an a destine'
+        self.rfrom = rfrom
+        self.rto = rto
 
-    form = {
-        'nucleo': '10', 'i': 's', 'cp': 'NO', 'TXTInfo': '',
-        'o': O, 'd': D, 'df': DF, 'ho': ho, 'hd': hd
-    }
+    def timetable(self, day=None, initialHour=0, finalHour=24):
+        'Show the timetable of the renfe route'
+        if not day:
+            day = datetime.now().strftime('%Y%m%d')
 
-    r = requests.post(URL, data=form)
+        if not re.match('^\d{8}$', day):
+            raise ValueError('Incorrect date format: %Y%m%d')
 
-    schedule = re.compile('<td class=color1 align=center>(.*)</td>')
-    matches = [map(int, e.split('.')) for e in schedule.findall(r.text)]
+        return self._downloadTimetable(day, initialHour, finalHour)
 
-    return [time(x[0], x[1]) for x in matches]
+    def nextTrain(self, quantity=1, margin=5):
+        'Show the next train'
+        now = datetime.now()
 
+        today = now.strftime('%Y%m%d')
+        hour = now.strftime('%H')
+        nowLimit = time(now.hour, now.minute + margin)
 
-def check_limits(timetable, minval=10, maxval=15):
-    'Return trains between mini and maxi minutes from now'
-    now = datetime.now()
+        timetable = self._downloadTimetable(today, hour)
 
-    low = now + timedelta(0, minval * 60)
-    high = now + timedelta(0, maxval * 60)
+        for i in range(len(timetable)):
+            if timetable[i]['leave'] > nowLimit:
+                return timetable[i:i + quantity]
 
-    # We only care about time
-    low, high = low.time(), high.time()
+        return None
 
-    return filter(lambda x: x > low and x <= high, timetable)
+    def _downloadTimetable(self, day, initialHour=0, finalHour=24):
+        'Download the timetable from renfe.com'
+        params = {
+            'nucleo': '10',
+            'o': self.rfrom,
+            'd': self.rto,
+            'df': day,
+            'ho': initialHour,
+            'hd': finalHour
+        }
 
+        req = requests.get(RenfeRoute.URL, params=params)
+        timetable = etree.fromstring(req.content)
+        trains_timetable = []
 
-def raise_notification(title, message):
-    'Raise the notification to the system'
-    noti = pynotify.Notification(title, message, 'dialog-warning')
-    noti.show()
+        for t in timetable[3]:
+            duration = map(int, t[3].text.split(':'))
 
-    # Execute mplayer with a sound (FIXME: Find a better way)
-    try:
-        parent_dir = os.path.dirname(os.path.realpath(__file__))
-        with open('/dev/null', 'wb') as devnull:
-            subprocess.Popen(['mplayer',
-                              os.path.join(parent_dir, 'train.mp3')],
-                             stdout=devnull, stderr=devnull)
-    except Exception:
-        logging.warning('No mplayer installed')
+            trains_timetable.append({
+                'train': t[0].text,
+                'leave': time(*map(int, t[1].text.split(':'))),
+                'arrive': time(*map(int, t[2].text.split(':'))),
+                'time': timedelta(*duration),
+            })
 
-
-def show_help():
-    'Show how to use the script'
-    print('Use: ./renfe.py [high] [low]')
-    sys.exit(0)
+        return trains_timetable
 
 
 if __name__ == '__main__':
-    try:
-        if len(sys.argv) == 3:
-            mini, maxi = map(int, sys.argv[1:])
-        elif len(sys.argv) == 2:
-            if sys.argv[1] in ('-h', '--help'):
-                show_help()
-            mini, maxi = 10, int(sys.argv[1])
-        elif len(sys.argv) == 1:
-            mini, maxi = 10, 15
-        else:
-            show_help()
-    except ValueError:
-        show_help()
-
-    trains = check_limits(download_timetable(), mini, maxi)
-
-    if trains:
-        msg = 'Next train%s leaving at ' + ', '.join(map(str, trains))
-        msg = msg % 's are' if len(trains) > 1 else msg % ' is'
-
-        if sys.stdout.isatty():
-            print(msg)
-        else:
-            if pynotify:
-                pynotify.init('renfe-notifier')
-                raise_notification('Train leaving...', msg)
-    else:
-        if sys.stdout.isatty():
-            print('No trains')
+    rr = RenfeRoute(98003, 18000)
+    print rr.nextTrain()
 
 # vim: ai ts=4 sts=4 et sw=4
