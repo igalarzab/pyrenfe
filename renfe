@@ -45,7 +45,11 @@ class RenfeRoute(object):
 
         today = now.strftime('%Y%m%d')
         hour = now.strftime('%H')
-        nowLimit = time(now.hour, now.minute + margin)
+
+        # Calculates the limit range to search
+        limitMinute = (now.minute + margin) % 60
+        limitHour = now.hour if (now.minute + margin) < 60 else (now.hour + 1)
+        nowLimit = time(limitHour, limitMinute)
 
         timetable = self._downloadTimetable(today, hour)
 
@@ -69,6 +73,9 @@ class RenfeRoute(object):
         req = requests.get(RenfeRoute.URL, params=params)
         timetable = etree.fromstring(req.content)
         trains_timetable = []
+
+        if timetable[0].text.strip() == 'Datos no disponibles.':
+            raise ValueError('Invalid origin or destine')
 
         for t in timetable[3]:
             duration = map(int, t[3].text.split(':'))
@@ -113,14 +120,41 @@ class TimetablePrinter(object):
 def create_parser():
     'Parse the program arguments'
     pparser = argparse.ArgumentParser(description='Check Renfe schedule')
+    pparser.add_argument('--version', action='version', version='pyrenfe 1.0')
+
+    pparser.add_argument('-o', '--origin', dest='origin', required=True,
+                         metavar='RENFE_ID', type=int,
+                         help='origin renfe station (id, a number)')
+    pparser.add_argument('-d', '--destine', dest='destine', required=True,
+                         metavar='RENFE_ID', type=int,
+                         help='destine renfe station (id, a number)')
+
+    action = pparser.add_mutually_exclusive_group()
+
+    action.add_argument('-t', '--timetable', dest='timetable',
+                        action='store_true',
+                        help='show full timetable instead of the next train')
+
+    action.add_argument('-p', '--printer', dest='printer',
+                        choices=['table', 'text'], default='text',
+                        help='how to print the info (default: text)')
+
     return pparser
 
 
 if __name__ == '__main__':
     parser = create_parser()
     args = parser.parse_args()
+    rr = RenfeRoute(args.origin, args.destine)
 
-    rr = RenfeRoute(98003, 18000)
-    TimetablePrinter.as_table(rr.nextTrain())
+    if args.timetable:
+        trains = rr.timetable()
+    else:
+        trains = rr.nextTrain()
+
+    if args.printer == 'table' or args.timetable:
+        TimetablePrinter.as_table(trains)
+    else:
+        TimetablePrinter.as_text(trains)
 
 # vim: ai ts=4 sts=4 et sw=4
