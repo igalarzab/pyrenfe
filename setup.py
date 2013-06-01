@@ -1,11 +1,25 @@
 from setuptools import setup, find_packages
-import pyrenfe
+
+__uname__ = 'pyrenfe'
+__long_name__ = 'Train checker (Cercanias Renfe, Spain)'
+__version__ = '2.0'
+__author__ = 'Jose Ignacio Galarza'
+__email__ = 'igalarzab@gmail.com'
+__url__ = 'http://github.com/igalarzab/pyrenfe'
+__license__ = 'MIT'
 
 setup(
-    name=pyrenfe.__uname__,
-    version=pyrenfe.__version__,
+    name=__uname__,
+    version=__version__,
+    packages=find_packages(),
+
+    author=__author__,
+    author_email=__email__,
     description='Train timetable checker (Renfe Cercanias, Spain)',
-    long_description='\n'.join([open('README.rst').read()]),
+    long_description='\n'.join([open('README.md').read()]),
+    license=__license__,
+    url=__url__,
+    keywords='timetable,train,cercanias,renfe,spain',
 
     classifiers=[
         'Development Status :: 5 - Production/Stable',
@@ -16,17 +30,9 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Utilities',
     ],
-    keywords='timetable,train,cercanias,renfe,spain',
 
-    author=pyrenfe.__author__,
-    author_email=pyrenfe.__email__,
-    url=pyrenfe.__url__,
-    license=pyrenfe.__license__,
-
-    packages=find_packages(),
     py_modules=['pyrenfe'],
     include_package_data=True,
-    zip_safe=False,
     install_requires=['requests', 'lxml'],
     entry_points={
         'console_scripts': ['pyrenfe = pyrenfe:main']
