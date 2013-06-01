@@ -13,7 +13,7 @@ Nothing more, nothing less... :D
 
 To use ``pyrenfe``, you only need:
 
-* python >= 2.7
+* python >= 2.7 (compatible with Python 3)
 * requests (python module)
 * lxml (python module)
 

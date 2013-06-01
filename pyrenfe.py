@@ -20,7 +20,7 @@ import requests
 # Global information
 __uname__ = 'pyrenfe'
 __long_name__ = 'Train checker (Cercanias Renfe, Spain)'
-__version__ = '2.0'
+__version__ = '1.0'
 __author__ = 'Jose Ignacio Galarza'
 __email__ = 'igalarzab@gmail.com'
 __url__ = 'http://github.com/igalarzab/pyrenfe'
