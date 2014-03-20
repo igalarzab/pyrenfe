@@ -3,7 +3,7 @@
 
 ## What it does.
 
-This script helps you to know when there is a train (Renfe, Spain) next to
+This script helps you to know when there is a train ([Renfe](http://www.renfe.com/), Spain) next to
 leave the configured station. Also, you can query the timetable of an specific
 route.
 
