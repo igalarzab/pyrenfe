@@ -1,5 +1,4 @@
-# pyrenfe [![Project Status](http://stillmaintained.com/igalarzab/pyrenfe.png)](http://stillmaintained.com/igalarzab/pyrenfe)
-
+# pyrenfe
 
 ## What it does.
 
